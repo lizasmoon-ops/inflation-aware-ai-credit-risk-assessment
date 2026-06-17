@@ -2,85 +2,47 @@ import streamlit as st
 import pandas as pd
 import joblib
 
-# -------------------------------
-# Page Configuration
-# -------------------------------
 st.set_page_config(
     page_title="Inflation-Aware Credit Risk Tool",
     page_icon="🏦",
     layout="wide"
 )
 
-# -------------------------------
-# Load Model
-# -------------------------------
 model = joblib.load("credit_risk_model.pkl")
 feature_names = joblib.load("feature_names.pkl")
 
-# -------------------------------
-# Custom Styling
-# -------------------------------
 st.markdown("""
 <style>
-.main {
-    background-color: #f7f9fc;
-}
-
-.block-container {
-    padding-top: 2rem;
-    padding-bottom: 2rem;
-}
-
-.header-box {
-    background: linear-gradient(90deg, #0f172a, #1e3a8a);
-    padding: 35px;
-    border-radius: 18px;
+.header {
+    background: linear-gradient(90deg, #0f172a, #1e40af);
+    padding: 30px;
+    border-radius: 15px;
     color: white;
-    margin-bottom: 30px;
-}
-
-.metric-card {
-    background-color: white;
-    padding: 25px;
-    border-radius: 16px;
-    box-shadow: 0px 4px 15px rgba(0,0,0,0.08);
-    text-align: center;
-    margin-bottom: 15px;
-}
-
-.section-card {
-    background-color: white;
-    padding: 25px;
-    border-radius: 16px;
-    box-shadow: 0px 4px 15px rgba(0,0,0,0.06);
     margin-bottom: 25px;
 }
-
-.low {
-    color: #15803d;
-    font-weight: bold;
+.card {
+    background-color: white;
+    padding: 22px;
+    border-radius: 14px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
 }
-
-.medium {
-    color: #ca8a04;
-    font-weight: bold;
+.metric-title {
+    font-size: 16px;
+    color: #475569;
 }
-
-.high {
-    color: #ea580c;
+.metric-value {
+    font-size: 30px;
     font-weight: bold;
+    color: #0f172a;
 }
-
-.veryhigh {
-    color: #dc2626;
-    font-weight: bold;
-}
+.low {color: #15803d; font-weight: bold;}
+.medium {color: #ca8a04; font-weight: bold;}
+.high {color: #ea580c; font-weight: bold;}
+.veryhigh {color: #dc2626; font-weight: bold;}
 </style>
 """, unsafe_allow_html=True)
 
-# -------------------------------
-# Functions
-# -------------------------------
 def risk_category(probability):
     if probability < 0.05:
         return "Low Risk"
@@ -134,23 +96,14 @@ def create_borrower_data(age, income, debt_ratio, credit_utilisation, credit_lin
 
     return borrower[feature_names]
 
-# -------------------------------
-# Header
-# -------------------------------
 st.markdown("""
-<div class="header-box">
-    <h1>🏦 Inflation-Aware Credit Risk Decision Support Tool</h1>
-    <p style="font-size:18px;">
-    AI-powered borrower default prediction with inflation stress-testing and lending recommendation support.
-    </p>
+<div class="header">
+<h1>🏦 Inflation-Aware Credit Risk Decision Support Tool</h1>
+<p>AI-based borrower default prediction with inflation stress testing and lending recommendation support.</p>
 </div>
 """, unsafe_allow_html=True)
 
-# -------------------------------
-# Sidebar Inputs
-# -------------------------------
-st.sidebar.title("Borrower Profile")
-st.sidebar.write("Enter borrower information below.")
+st.sidebar.header("Borrower Profile")
 
 age = st.sidebar.number_input("Age", min_value=18, max_value=100, value=40)
 income = st.sidebar.number_input("Monthly Income", min_value=0.0, value=3000.0)
@@ -160,94 +113,122 @@ credit_lines = st.sidebar.number_input("Open Credit Lines and Loans", min_value=
 late_90 = st.sidebar.number_input("Times 90 Days Late", min_value=0, value=0)
 dependents = st.sidebar.number_input("Number of Dependents", min_value=0, value=0)
 
-assess = st.sidebar.button("Run Credit Risk Assessment")
+run_assessment = st.sidebar.button("Run Assessment")
 
-# -------------------------------
-# Main Page Before Assessment
-# -------------------------------
-if not assess:
+if not run_assessment:
     col1, col2, col3 = st.columns(3)
 
     with col1:
         st.markdown("""
-        <div class="section-card">
-            <h3>1. Default Prediction</h3>
-            <p>The system uses a trained Gradient Boosting model to estimate borrower default probability.</p>
+        <div class="card">
+        <h3>1. Credit Risk Prediction</h3>
+        <p>The system estimates borrower default probability using a trained Gradient Boosting model.</p>
         </div>
         """, unsafe_allow_html=True)
 
     with col2:
         st.markdown("""
-        <div class="section-card">
-            <h3>2. Inflation Stress Testing</h3>
-            <p>The tool simulates mild, moderate and severe inflation scenarios to assess changing borrower risk.</p>
+        <div class="card">
+        <h3>2. Inflation Stress Testing</h3>
+        <p>The tool simulates mild, moderate and severe inflationary pressure on borrower financial conditions.</p>
         </div>
         """, unsafe_allow_html=True)
 
     with col3:
         st.markdown("""
-        <div class="section-card">
-            <h3>3. Lending Recommendation</h3>
-            <p>The system assigns a risk category and produces a decision-support recommendation.</p>
+        <div class="card">
+        <h3>3. Lending Decision Support</h3>
+        <p>The system produces a risk category and recommendation to support lending assessment.</p>
         </div>
         """, unsafe_allow_html=True)
 
-    st.info("Use the sidebar to enter borrower details and run the assessment.")
+    st.info("Enter borrower details in the sidebar and click Run Assessment.")
 
-# -------------------------------
-# Assessment Results
-# -------------------------------
-if assess:
+if run_assessment:
     normal = create_borrower_data(age, income, debt_ratio, credit_utilisation, credit_lines, late_90, dependents)
-    normal_prob = model.predict_proba(normal)[0][1]
-
     mild = create_borrower_data(age, income * 0.95, debt_ratio * 1.10, credit_utilisation * 1.05, credit_lines, late_90, dependents)
-    mild_prob = model.predict_proba(mild)[0][1]
-
     moderate = create_borrower_data(age, income * 0.90, debt_ratio * 1.20, credit_utilisation * 1.15, credit_lines, late_90, dependents)
-    moderate_prob = model.predict_proba(moderate)[0][1]
-
     severe = create_borrower_data(age, income * 0.85, debt_ratio * 1.30, credit_utilisation * 1.25, credit_lines, late_90, dependents)
+
+    normal_prob = model.predict_proba(normal)[0][1]
+    mild_prob = model.predict_proba(mild)[0][1]
+    moderate_prob = model.predict_proba(moderate)[0][1]
     severe_prob = model.predict_proba(severe)[0][1]
 
-    category = risk_category(normal_prob)
+    normal_category = risk_category(normal_prob)
+    severe_category = risk_category(severe_prob)
     rec = recommendation(normal_prob)
+
+    increase = severe_prob - normal_prob
 
     st.subheader("Credit Risk Assessment Summary")
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
 
     with col1:
         st.markdown(f"""
-        <div class="metric-card">
-            <h4>Default Probability</h4>
-            <h2>{normal_prob:.2%}</h2>
+        <div class="card">
+        <div class="metric-title">Default Probability</div>
+        <div class="metric-value">{normal_prob:.2%}</div>
         </div>
         """, unsafe_allow_html=True)
 
     with col2:
         st.markdown(f"""
-        <div class="metric-card">
-            <h4>Risk Category</h4>
-            <h2 class="{risk_class(category)}">{category}</h2>
+        <div class="card">
+        <div class="metric-title">Risk Category</div>
+        <div class="metric-value {risk_class(normal_category)}">{normal_category}</div>
         </div>
         """, unsafe_allow_html=True)
 
     with col3:
         st.markdown(f"""
-        <div class="metric-card">
-            <h4>Recommendation</h4>
-            <h2>{rec}</h2>
+        <div class="card">
+        <div class="metric-title">Severe Stress Increase</div>
+        <div class="metric-value">{increase:.2%}</div>
         </div>
         """, unsafe_allow_html=True)
+
+    with col4:
+        st.markdown(f"""
+        <div class="card">
+        <div class="metric-title">Recommendation</div>
+        <div class="metric-value">{rec}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.subheader("Borrower Input Summary")
+
+    borrower_summary = pd.DataFrame({
+        "Input Variable": [
+            "Age",
+            "Monthly Income",
+            "Debt Ratio",
+            "Credit Utilisation",
+            "Open Credit Lines and Loans",
+            "Times 90 Days Late",
+            "Number of Dependents"
+        ],
+        "Value": [
+            age,
+            income,
+            debt_ratio,
+            credit_utilisation,
+            credit_lines,
+            late_90,
+            dependents
+        ]
+    })
+
+    st.dataframe(borrower_summary, use_container_width=True)
 
     st.subheader("Inflation Stress Testing Results")
 
     results = pd.DataFrame({
         "Scenario": ["Normal", "Mild Inflation", "Moderate Inflation", "Severe Inflation"],
-        "Income Adjustment": ["None", "-5%", "-10%", "-15%"],
-        "Debt Ratio Adjustment": ["None", "+10%", "+20%", "+30%"],
-        "Credit Utilisation Adjustment": ["None", "+5%", "+15%", "+25%"],
+        "Income Change": ["None", "-5%", "-10%", "-15%"],
+        "Debt Ratio Change": ["None", "+10%", "+20%", "+30%"],
+        "Credit Utilisation Change": ["None", "+5%", "+15%", "+25%"],
         "Default Probability": [normal_prob, mild_prob, moderate_prob, severe_prob],
         "Risk Category": [
             risk_category(normal_prob),
@@ -273,21 +254,54 @@ if assess:
         "Default Probability": [normal_prob, mild_prob, moderate_prob, severe_prob]
     })
 
+    st.subheader("Default Probability Across Inflation Scenarios")
     st.bar_chart(chart_data.set_index("Scenario"))
 
-    st.subheader("Interpretation")
+    st.subheader("Risk Migration Analysis")
 
-    if severe_prob > normal_prob:
-        increase = severe_prob - normal_prob
+    migration_data = pd.DataFrame({
+        "Stage": ["Normal Condition", "Severe Inflation Condition"],
+        "Risk Category": [normal_category, severe_category],
+        "Default Probability": [f"{normal_prob:.2%}", f"{severe_prob:.2%}"]
+    })
+
+    st.dataframe(migration_data, use_container_width=True)
+
+    if severe_category != normal_category:
         st.warning(
-            f"Under severe inflation conditions, the borrower's predicted default probability increases by {increase:.2%}. "
-            "This indicates that inflationary pressure can worsen borrower risk and should be considered in lending decisions."
+            f"The borrower migrates from {normal_category} under normal conditions to {severe_category} under severe inflation. "
+            "This suggests that inflation stress testing can reveal additional lending risk not visible under normal assessment."
         )
     else:
         st.info(
-            "The model does not show a major increase in risk under stress conditions for this borrower profile."
+            f"The borrower remains in the {normal_category} category under severe inflation, although the predicted probability changes."
         )
 
-    st.caption(
-        "Disclaimer: This application is a dissertation prototype. In a real banking environment, the system would require secure authentication, regulatory validation, explainability controls and private deployment."
-    )
+    st.subheader("Interpretation")
+
+    if increase > 0:
+        st.warning(
+            f"Under severe inflation, the predicted default probability increases by {increase:.2%}. "
+            "This indicates that inflationary pressure may weaken borrower repayment capacity and should be considered before final lending approval."
+        )
+    else:
+        st.success(
+            "The model does not show an increase in default probability under severe inflation for this borrower profile."
+        )
+
+    with st.expander("Model Information"):
+        st.write("Model used: Gradient Boosting Classifier")
+        st.write("ROC-AUC: 0.867")
+        st.write("Top predictors identified during model development:")
+        st.write("- Number of Times 90 Days Late")
+        st.write("- Revolving Utilisation of Unsecured Lines")
+        st.write("- Number of Times 60–89 Days Past Due")
+        st.write("- Number of Times 30–59 Days Past Due")
+        st.write("- Age")
+        st.write("- Debt Ratio")
+
+    with st.expander("Prototype Disclaimer"):
+        st.write(
+            "This application is a dissertation prototype designed to demonstrate an inflation-aware AI credit risk decision support system. "
+            "It should not be used for real lending decisions without regulatory validation, explainability testing, fairness assessment, secure authentication and private deployment."
+        )
